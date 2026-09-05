@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AUTOPLAY STORE</title>
+
+<style>
+* { box-sizing: border-box; font-family: Arial, sans-serif; }
+body {
+  margin: 0; min-height: 100vh; background: #f2f4f7; color: #171717;
+}
+.store-header {
+  background: white; padding: 15px 18px; border-bottom: 1px solid #e5e7eb;
+  position: sticky; top: 0; z-index: 5;
+}
+.brand { max-width: 900px; margin: auto; display: flex; align-items: center; gap: 12px; }
+.snake-logo {
+  width: 48px; height: 48px; border-radius: 14px; background: #e9f7df;
+  display: grid; place-items: center; font-size: 29px;
+}
+.store-name { font-size: 21px; font-weight: 800; letter-spacing: .3px; }
+.store-sub { font-size: 12px; color: #777; margin-top: 2px; }
+
+.store { max-width: 900px; margin: 20px auto; padding: 0 14px; }
+.product-card {
+  background: white; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 4px 18px rgba(0,0,0,.08);
+  display: flex; flex-direction: column;
+}
+.product-image {
+  min-height: 210px; background: #eef8e9; display: grid; place-items: center;
+  font-size: 100px;
+}
+.product-info { padding: 18px; }
+.badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  background: #e9f7df; padding: 6px 9px; border-radius: 20px;
+}
+h1 { font-size: 22px; margin: 10px 0 6px; }
+.description { color: #666; font-size: 14px; margin: 0 0 18px; }
+.bottom-row { display: flex; align-items: center; gap: 12px; }
+.price { font-size: 25px; font-weight: 800; white-space: nowrap; }
+button {
+  border: 0; border-radius: 10px; padding: 13px 16px; font-size: 15px;
+  font-weight: 700; cursor: pointer; width: 100%;
+}
+#payBtn { background: #222; color: white; }
+#unlockBtn { background: #18a558; color: white; display: none; margin-top: 12px; }
+#status { margin-top: 14px; font-size: 13px; line-height: 1.45; color: #666; }
+.error-msg { color: #d93025 !important; font-weight: bold; }
+
+@media (min-width: 650px) {
+  .product-card { flex-direction: row; }
+  .product-image { width: 42%; min-height: 330px; }
+  .product-info { flex: 1; padding: 28px; }
+}
+</style>
+</head>
+
+<body>
+  <header class="store-header">
+    <div class="brand">
+      <div class="snake-logo" aria-label="Cartoon snake logo">🐍</div>
+      <div>
+        <div class="store-name">AUTOPLAY STORE</div>
+        <div class="store-sub">Digital Store</div>
+      </div>
+    </div>
+  </header>
+
+  <main class="store">
+    <section class="product-card">
+      <div class="product-image">🐍</div>
+      <div class="product-info">
+        <div class="badge">AVAILABLE</div>
+        <h1>AutoPlay Item</h1>
+        <p class="description">Instant digital item • Payment required to unlock</p>
+        <div class="bottom-row">
+          <div class="price">₹100</div>
+          <button id="payBtn" onclick="openUPI()">Buy ₹100</button>
+        </div>
+        <div id="status">Tap Buy ₹100 to open your UPI app.</div>
+        <button id="unlockBtn" onclick="openWhatsApp()">🔓 Unlock Link</button>
+      </div>
+    </section>
+  </main>
+
+<script>
+  const OWNER_UPI = "6000149307@ptsbi";
+  const OWNER_NAME = "AUTOPLAY STORE";
+  const WHATSAPP_NUMBER = "916001471307";
+
+  const unlockBtn = document.getElementById("unlockBtn");
+  const status = document.getElementById("status");
+
+  let appOpened = false;
+
+  function handleVisibilityChange() {
+    if (document.hidden) {
+      appOpened = true;
+    } else if (appOpened) {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      status.className = "";
+      status.textContent = "Returned from payment app. Click Unlock Link to verify payment.";
+      unlockBtn.style.display = "block";
+    }
+  }
+
+  function openUPI() {
+    if (!OWNER_UPI) {
+      status.className = "error-msg";
+      status.textContent = "Owner UPI ID missing.";
+      return;
+    }
+
+    appOpened = false;
+    unlockBtn.style.display = "none";
+    status.className = "";
+    status.textContent = "Opening UPI payment app…";
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    const upiUrl =
+      "upi://pay" +
+      "?pa=" + encodeURIComponent(OWNER_UPI) +
+      "&pn=" + encodeURIComponent(OWNER_NAME) +
+      "&am=100" +
+      "&cu=INR" +
+      "&tn=" + encodeURIComponent("AUTOPLAY STORE - ₹100");
+
+    const startTime = Date.now();
+    window.location.href = upiUrl;
+
+    setTimeout(function () {
+      const elapsed = Date.now() - startTime;
+      if (elapsed < 2500 && !document.hidden && !appOpened) {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+        status.className = "error-msg";
+        status.innerHTML = "No payment app installed in your device.<br>Please install a supported UPI app and try again.";
+      }
+    }, 2000);
+  }
+
+  function openWhatsApp() {
+    const message = encodeURIComponent(
+      "Hello AUTOPLAY STORE, I have completed the ₹100 payment. Please verify and send me the unlock link."
+    );
+
+    window.location.href =
+      "https://wa.me/" + WHATSAPP_NUMBER + "?text=" + message;
+  }
+</script>
+
+</body>
+</html>
